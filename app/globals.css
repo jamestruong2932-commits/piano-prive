@@ -1,0 +1,105 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f6f1e4;
+  --background-elevated: #fbf8f0;
+  --foreground: #1c2b22;
+  --muted: #746b58;
+  --forest: #1f3d2e;
+  --forest-deep: #142a1f;
+  --gold: #b68a4e;
+  --gold-soft: #d9c08b;
+  --hairline: rgba(28, 43, 34, 0.14);
+  --error: #8a3324;
+  --success: #2f6b46;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-background-elevated: var(--background-elevated);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-forest: var(--forest);
+  --color-forest-deep: var(--forest-deep);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-hairline: var(--hairline);
+  --color-error: var(--error);
+  --color-success: var(--success);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-playfair);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0e1712;
+    --background-elevated: #16211a;
+    --foreground: #ede4d0;
+    --muted: #a49b87;
+    --forest: #2c5540;
+    --forest-deep: #0a1310;
+    --gold: #d4b877;
+    --gold-soft: #b68a4e;
+    --hairline: rgba(237, 228, 208, 0.14);
+    --error: #c1573f;
+    --success: #6fae87;
+  }
+}
+
+body {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -10%, var(--gold) 0%, transparent 100%) fixed,
+    var(--background);
+  background-blend-mode: soft-light, normal;
+  color: var(--foreground);
+}
+
+::selection {
+  background: var(--gold-soft);
+  color: var(--forest-deep);
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-gold {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(182, 138, 78, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(182, 138, 78, 0);
+  }
+}
+
+.animate-pop-in {
+  animation: pop-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease both;
+}
+
+.animate-pulse-gold {
+  animation: pulse-gold 2s ease-out infinite;
+}
