@@ -1,3 +1,5 @@
+import { bogoshipda } from "./songs/bogoshipda";
+
 export type Hand = "left" | "right";
 
 export interface LessonNote {
@@ -84,6 +86,7 @@ export const LESSONS: Lesson[] = [
       ...seq("right", "D4", "D4"),
     ],
   },
+  bogoshipda,
 ];
 
 export function getLessonById(id: string): Lesson | undefined {
