@@ -1,23 +1,29 @@
 "use client";
 
 import { isBlackKey, midiToLabel } from "@/lib/noteUtils";
+import type { Hand } from "@/lib/lessons";
+
+interface TargetNote {
+  midi: number;
+  hand: Hand;
+}
 
 interface PianoKeyboardProps {
   /** First MIDI note to render (inclusive), should be a white key (e.g. C). */
   rangeStart: number;
   /** Last MIDI note to render (inclusive), should be a white key (e.g. C). */
   rangeEnd: number;
-  /** MIDI note the lesson currently expects the user to play. */
-  targetMidi?: number | null;
-  /** MIDI note most recently detected from the microphone. */
-  detectedMidi?: number | null;
+  /** MIDI notes the lesson currently expects the user to play (may be several, for a chord/two-hand step). */
+  targetNotes?: TargetNote[];
+  /** MIDI notes currently detected from the microphone. */
+  detectedMidis?: number[];
 }
 
 export default function PianoKeyboard({
   rangeStart,
   rangeEnd,
-  targetMidi = null,
-  detectedMidi = null,
+  targetNotes = [],
+  detectedMidis = [],
 }: PianoKeyboardProps) {
   const whiteKeys: number[] = [];
   for (let midi = rangeStart; midi <= rangeEnd; midi++) {
@@ -34,27 +40,45 @@ export default function PianoKeyboard({
     blackKeys.push({ midi, leftPercent });
   }
 
+  const targetHandByMidi = new Map(targetNotes.map((t) => [t.midi, t.hand]));
+
   const keyState = (midi: number): "target" | "detected" | "both" | "idle" => {
-    const isTarget = midi === targetMidi;
-    const isDetected = midi === detectedMidi;
+    const isTarget = targetHandByMidi.has(midi);
+    const isDetected = detectedMidis.includes(midi);
     if (isTarget && isDetected) return "both";
     if (isTarget) return "target";
     if (isDetected) return "detected";
     return "idle";
   };
 
-  const whiteKeyClass: Record<ReturnType<typeof keyState>, string> = {
-    idle: "bg-background-elevated hover:bg-gold-soft/15",
-    target: "bg-gold-soft/35 ring-2 ring-inset ring-gold",
-    detected: "bg-forest/20 ring-2 ring-inset ring-forest",
-    both: "translate-y-[3px] bg-gold/60 shadow-inner ring-2 ring-inset ring-gold",
+  const whiteKeyClass = (midi: number): string => {
+    switch (keyState(midi)) {
+      case "idle":
+        return "bg-background-elevated hover:bg-gold-soft/15";
+      case "detected":
+        return "bg-error/10 ring-2 ring-inset ring-error/60";
+      case "both":
+        return "translate-y-[3px] bg-success/20 shadow-inner ring-2 ring-inset ring-success";
+      case "target":
+        return targetHandByMidi.get(midi) === "left"
+          ? "bg-forest/10 ring-2 ring-inset ring-forest"
+          : "bg-gold-soft/35 ring-2 ring-inset ring-gold";
+    }
   };
 
-  const blackKeyClass: Record<ReturnType<typeof keyState>, string> = {
-    idle: "bg-forest-deep",
-    target: "bg-forest-deep ring-2 ring-inset ring-gold",
-    detected: "bg-forest ring-2 ring-inset ring-forest",
-    both: "translate-y-[2px] bg-gold shadow-inner ring-2 ring-inset ring-gold",
+  const blackKeyClass = (midi: number): string => {
+    switch (keyState(midi)) {
+      case "idle":
+        return "bg-forest-deep";
+      case "detected":
+        return "bg-forest-deep ring-2 ring-inset ring-error/60";
+      case "both":
+        return "translate-y-[2px] bg-success shadow-inner ring-2 ring-inset ring-success";
+      case "target":
+        return targetHandByMidi.get(midi) === "left"
+          ? "bg-forest-deep ring-2 ring-inset ring-forest"
+          : "bg-forest-deep ring-2 ring-inset ring-gold";
+    }
   };
 
   return (
@@ -63,7 +87,7 @@ export default function PianoKeyboard({
         {whiteKeys.map((midi) => (
           <div
             key={midi}
-            className={`relative flex-1 border-r border-hairline transition-all duration-150 last:border-r-0 ${whiteKeyClass[keyState(midi)]}`}
+            className={`relative flex-1 border-r border-hairline transition-all duration-150 last:border-r-0 ${whiteKeyClass(midi)}`}
             title={midiToLabel(midi)}
           >
             <span className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[10px] text-muted">
@@ -76,7 +100,7 @@ export default function PianoKeyboard({
         {blackKeys.map(({ midi, leftPercent }) => (
           <div
             key={midi}
-            className={`absolute top-0 h-full rounded-b-md shadow-md transition-all duration-150 ${blackKeyClass[keyState(midi)]}`}
+            className={`absolute top-0 h-full rounded-b-md shadow-md transition-all duration-150 ${blackKeyClass(midi)}`}
             style={{
               left: `${leftPercent}%`,
               width: `${whiteKeyWidth * 0.6}%`,

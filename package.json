@@ -9,10 +9,13 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@spotify/basic-pitch": "^1.0.1",
+    "@tonejs/midi": "^2.0.28",
     "next": "16.2.12",
     "pitchy": "^4.1.0",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "vexflow": "^5.0.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

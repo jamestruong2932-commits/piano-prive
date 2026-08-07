@@ -1,5 +1,4 @@
-import { notFound } from "next/navigation";
-import { LESSONS, getLessonById } from "@/lib/lessons";
+import { LESSONS } from "@/lib/lessons";
 import PracticeSession from "@/components/PracticeSession";
 
 export function generateStaticParams() {
@@ -10,18 +9,15 @@ interface PracticePageProps {
   params: Promise<{ lessonId: string }>;
 }
 
+// Imported lessons only exist in the browser's localStorage, so unknown ids
+// aren't 404'd here on the server — PracticeSession resolves them client-side.
 export default async function PracticePage({ params }: PracticePageProps) {
   const { lessonId } = await params;
-  const lesson = getLessonById(lessonId);
-
-  if (!lesson) {
-    notFound();
-  }
 
   return (
     <div className="flex flex-1 flex-col items-center px-4 py-10 sm:py-16">
       <div className="w-full max-w-2xl">
-        <PracticeSession lesson={lesson} />
+        <PracticeSession lessonId={lessonId} />
       </div>
     </div>
   );

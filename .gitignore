@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# personal audio files used for local testing — never commit copyrighted media
+/Music/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

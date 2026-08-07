@@ -1,54 +1,115 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
-import type { Lesson } from "@/lib/lessons";
-import { noteLabelToMidi, midiToLabel } from "@/lib/noteUtils";
+import { getLessonById, type Lesson } from "@/lib/lessons";
+import { getImportedLessons } from "@/lib/importedLessons";
+import { noteLabelToMidi } from "@/lib/noteUtils";
 import { usePitchDetector } from "@/lib/pitchDetection";
 import PianoKeyboard from "./PianoKeyboard";
 import NoteFeedback from "./NoteFeedback";
-import NoteTrail from "./NoteTrail";
+
+// VexFlow needs a DOM to render into and is a sizable dependency (music
+// glyph fonts) — only load it client-side, on the practice screen.
+const StaffNotation = dynamic(() => import("./StaffNotation"), {
+  ssr: false,
+  loading: () => <div className="h-[140px] w-full" />,
+});
 
 const STABLE_FRAMES_REQUIRED = 8; // consecutive matching frames before advancing
-const CENTS_TOLERANCE = 45;
 
 interface PracticeSessionProps {
-  lesson: Lesson;
+  lessonId: string;
 }
 
-export default function PracticeSession({ lesson }: PracticeSessionProps) {
-  const { reading, permission, errorMessage, start, stop } = usePitchDetector();
+type LessonState =
+  | { status: "loading" }
+  | { status: "found"; lesson: Lesson }
+  | { status: "not-found" };
+
+function initialLessonState(lessonId: string): LessonState {
+  const builtIn = getLessonById(lessonId);
+  // Built-in lessons resolve synchronously from static data (works during
+  // SSR too). Anything else might be an imported lesson living in
+  // localStorage, which is only readable after mount on the client.
+  return builtIn ? { status: "found", lesson: builtIn } : { status: "loading" };
+}
+
+export default function PracticeSession({ lessonId }: PracticeSessionProps) {
+  const [state, setState] = useState<LessonState>(() => initialLessonState(lessonId));
+
+  useEffect(() => {
+    if (state.status !== "loading") return;
+    const imported = getImportedLessons().find((l) => l.id === lessonId);
+    setState(imported ? { status: "found", lesson: imported } : { status: "not-found" });
+  }, [lessonId, state.status]);
+
+  if (state.status === "loading") {
+    return <p className="text-sm text-muted">Đang tải bài học…</p>;
+  }
+
+  if (state.status === "not-found") {
+    return (
+      <div className="flex flex-col items-center gap-4 py-4 text-center">
+        <p className="text-sm text-muted">Không tìm thấy bài học này.</p>
+        <Link
+          href="/"
+          className="rounded-full border border-gold px-6 py-3 text-xs font-medium uppercase tracking-widest text-gold transition-colors hover:bg-gold hover:text-forest-deep"
+        >
+          Về trang chủ
+        </Link>
+      </div>
+    );
+  }
+
+  return <ActivePractice lesson={state.lesson} />;
+}
+
+function ActivePractice({ lesson }: { lesson: Lesson }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [justAdvanced, setJustAdvanced] = useState(false);
   const stableCountRef = useRef(0);
 
-  const noteMidis = useMemo(
-    () => lesson.notes.map((n) => noteLabelToMidi(n.note)),
+  const isComplete = currentIndex >= lesson.steps.length;
+  const currentStep = isComplete ? null : lesson.steps[currentIndex];
+
+  const targetNotes = useMemo(
+    () =>
+      currentStep?.notes.map((n) => ({
+        midi: noteLabelToMidi(n.note),
+        label: n.note,
+        hand: n.hand,
+      })) ?? [],
+    [currentStep]
+  );
+
+  const candidateMidis = useMemo(() => targetNotes.map((t) => t.midi), [targetNotes]);
+  const { detectedMidis, permission, errorMessage, start, stop } =
+    usePitchDetector(candidateMidis);
+  const detectedMidiList = useMemo(() => Array.from(detectedMidis), [detectedMidis]);
+
+  const allMidis = useMemo(
+    () => lesson.steps.flatMap((step) => step.notes.map((n) => noteLabelToMidi(n.note))),
     [lesson]
   );
 
-  const isComplete = currentIndex >= noteMidis.length;
-  const targetMidi = isComplete ? null : noteMidis[currentIndex];
-
   const { rangeStart, rangeEnd } = useMemo(() => {
-    const min = Math.min(...noteMidis);
-    const max = Math.max(...noteMidis);
+    const min = Math.min(...allMidis);
+    const max = Math.max(...allMidis);
     const start = min - (min % 12); // round down to C
     const endRemainder = max % 12;
     const end = endRemainder === 0 ? max : max + (12 - endRemainder);
     return { rangeStart: start, rangeEnd: end };
-  }, [noteMidis]);
+  }, [allMidis]);
 
-  const isCorrectNow =
-    !isComplete &&
-    reading.note !== null &&
-    reading.note.midi === targetMidi &&
-    Math.abs(reading.note.cents) <= CENTS_TOLERANCE;
+  const isStepCorrectNow =
+    !isComplete && targetNotes.every((t) => detectedMidis.has(t.midi));
 
   useEffect(() => {
     if (isComplete) return;
 
-    if (isCorrectNow) {
+    if (isStepCorrectNow) {
       stableCountRef.current += 1;
       if (stableCountRef.current >= STABLE_FRAMES_REQUIRED) {
         stableCountRef.current = 0;
@@ -59,15 +120,18 @@ export default function PracticeSession({ lesson }: PracticeSessionProps) {
     } else {
       stableCountRef.current = 0;
     }
+    // Keyed on `detectedMidis` (a new Set reference every detector tick),
+    // not on `isStepCorrectNow` — that's a derived boolean that can stay
+    // `true` across many consecutive ticks without its value ever
+    // "changing", which would stop this effect from re-running at all and
+    // freeze the stable-frame count at 1 forever for a very steady signal.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reading.note?.midi, reading.note?.cents, isComplete]);
+  }, [detectedMidis, isComplete]);
 
   const handleRestart = () => {
     stableCountRef.current = 0;
     setCurrentIndex(0);
   };
-
-  const noteLabels = useMemo(() => lesson.notes.map((n) => n.note), [lesson]);
 
   return (
     <div className="flex w-full flex-col items-center gap-8">
@@ -115,12 +179,12 @@ export default function PracticeSession({ lesson }: PracticeSessionProps) {
 
       {permission === "granted" && !isComplete && (
         <div className="flex w-full flex-col items-center gap-6">
-          <NoteTrail labels={noteLabels} currentIndex={currentIndex} />
+          <StaffNotation steps={lesson.steps} currentIndex={currentIndex} />
           <NoteFeedback
-            targetLabel={midiToLabel(targetMidi as number)}
-            detectedLabel={reading.note?.label ?? null}
-            isCorrect={justAdvanced || isCorrectNow}
-            progress={{ current: currentIndex + 1, total: noteMidis.length }}
+            targetNotes={targetNotes}
+            detectedMidis={detectedMidiList}
+            isCorrect={justAdvanced || isStepCorrectNow}
+            progress={{ current: currentIndex + 1, total: lesson.steps.length }}
           />
         </div>
       )}
@@ -145,8 +209,8 @@ export default function PracticeSession({ lesson }: PracticeSessionProps) {
       <PianoKeyboard
         rangeStart={rangeStart}
         rangeEnd={rangeEnd}
-        targetMidi={targetMidi}
-        detectedMidi={reading.note?.midi ?? null}
+        targetNotes={targetNotes}
+        detectedMidis={detectedMidiList}
       />
 
       {permission === "granted" && (
