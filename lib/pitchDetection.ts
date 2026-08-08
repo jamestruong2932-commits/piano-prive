@@ -13,14 +13,18 @@ const MAX_FREQUENCY = 4186; // C8, highest piano key
 const CENTS_TOLERANCE = 45;
 // How many dB a candidate note's peak must clear the frame's noise floor
 // to be considered "sounding". Heuristic, not validated against a real
-// piano/mic — expect to retune after real-world testing.
-const PRESENCE_MARGIN_DB = 12;
+// piano/mic — expect to retune after real-world testing. Lowered from an
+// initial 12dB: real-world use with dense multi-note chords (a full-song
+// transcription can ask for 3-5 simultaneous notes across both hands) found
+// the stricter margin made quieter notes in a chord — especially bass notes
+// struck softer than the melody — fail to register, stalling progress.
+const PRESENCE_MARGIN_DB = 8;
 // Absolute safety net: reject candidates outright below this, even if they
 // technically clear the relative margin (guards against near-silence where
 // the whole spectrum sits at a flat, low floor and tiny fluctuations could
 // otherwise "clear" a relative-only threshold).
 const PRESENCE_ABSOLUTE_FLOOR_DB = -75;
-const PRESENCE_BIN_WINDOW = 2;
+const PRESENCE_BIN_WINDOW = 3;
 
 export interface PitchReading {
   note: NoteInfo | null;

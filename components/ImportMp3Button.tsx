@@ -49,12 +49,17 @@ export default function ImportMp3Button() {
       />
 
       {status.kind !== "processing" && (
-        <button
-          onClick={() => inputRef.current?.click()}
-          className="rounded-full border border-gold px-5 py-2 text-xs font-medium uppercase tracking-widest text-gold transition-colors hover:bg-gold hover:text-forest-deep"
-        >
-          Nhập từ MP3 (piano solo)
-        </button>
+        <>
+          <button
+            onClick={() => inputRef.current?.click()}
+            className="rounded-full border border-hairline px-5 py-2 text-xs font-medium uppercase tracking-widest text-muted transition-colors hover:border-gold hover:text-gold"
+          >
+            Nhập từ MP3 (piano solo)
+          </button>
+          <p className="max-w-[220px] text-center text-[11px] leading-snug text-muted">
+            Nhận diện nốt từ MP3 chưa chính xác cao — chỉ nên dùng khi không có sẵn file MIDI.
+          </p>
+        </>
       )}
 
       {status.kind === "processing" && (

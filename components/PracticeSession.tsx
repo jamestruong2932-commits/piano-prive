@@ -17,7 +17,11 @@ const StaffNotation = dynamic(() => import("./StaffNotation"), {
   loading: () => <div className="h-[140px] w-full" />,
 });
 
-const STABLE_FRAMES_REQUIRED = 8; // consecutive matching frames before advancing
+// Consecutive matching frames before advancing. Lowered from 8: for a dense
+// multi-note chord it's easy for one note's detected energy to flicker below
+// threshold for a single frame (~16ms) even while genuinely being held, and
+// requiring a longer unbroken run than that mostly punishes correct playing.
+const STABLE_FRAMES_REQUIRED = 5;
 
 interface PracticeSessionProps {
   lessonId: string;
@@ -133,6 +137,12 @@ function ActivePractice({ lesson }: { lesson: Lesson }) {
     setCurrentIndex(0);
   };
 
+  const handleSeek = (index: number) => {
+    stableCountRef.current = 0;
+    setJustAdvanced(false);
+    setCurrentIndex(Math.max(0, Math.min(index, lesson.steps.length - 1)));
+  };
+
   return (
     <div className="flex w-full flex-col items-center gap-8">
       <div className="flex w-full items-center justify-between">
@@ -179,12 +189,13 @@ function ActivePractice({ lesson }: { lesson: Lesson }) {
 
       {permission === "granted" && !isComplete && (
         <div className="flex w-full flex-col items-center gap-6">
-          <StaffNotation steps={lesson.steps} currentIndex={currentIndex} />
+          <StaffNotation steps={lesson.steps} currentIndex={currentIndex} onSeek={handleSeek} />
           <NoteFeedback
             targetNotes={targetNotes}
             detectedMidis={detectedMidiList}
             isCorrect={justAdvanced || isStepCorrectNow}
             progress={{ current: currentIndex + 1, total: lesson.steps.length }}
+            onSeek={handleSeek}
           />
         </div>
       )}

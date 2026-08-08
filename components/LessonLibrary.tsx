@@ -27,8 +27,13 @@ export default function LessonLibrary({ builtInLessons }: LessonLibraryProps) {
 
   return (
     <div className="w-full">
-      <div className="mb-8 flex flex-wrap items-center justify-center gap-3">
+      <div className="mb-8 flex flex-col items-center gap-4">
         <ImportMidiButton />
+        <div className="flex items-center gap-3 text-[10px] uppercase tracking-widest text-muted">
+          <span className="h-px w-8 bg-hairline" />
+          hoặc
+          <span className="h-px w-8 bg-hairline" />
+        </div>
         <ImportMp3Button />
       </div>
 

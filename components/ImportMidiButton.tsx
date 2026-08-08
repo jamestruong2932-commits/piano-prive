@@ -105,9 +105,9 @@ export default function ImportMidiButton() {
         <button
           onClick={() => inputRef.current?.click()}
           disabled={status.kind === "loading"}
-          className="rounded-full border border-gold px-5 py-2 text-xs font-medium uppercase tracking-widest text-gold transition-colors hover:bg-gold hover:text-forest-deep disabled:opacity-50"
+          className="rounded-full border border-gold bg-gold px-6 py-3 text-xs font-semibold uppercase tracking-widest text-forest-deep shadow-[0_8px_24px_-10px_var(--gold)] transition-transform hover:-translate-y-0.5 disabled:opacity-50"
         >
-          {status.kind === "loading" ? "Đang xử lý…" : "Nhập từ file MIDI"}
+          {status.kind === "loading" ? "Đang xử lý…" : "Nhập từ file MIDI (khuyên dùng)"}
         </button>
       )}
 
