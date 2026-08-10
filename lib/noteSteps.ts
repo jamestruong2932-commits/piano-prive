@@ -19,15 +19,25 @@ export function splitHandByPitch(midi: number, splitMidi: number = MIDDLE_C): Ha
   return midi >= splitMidi ? "right" : "left";
 }
 
-/** Groups notes that sound at (nearly) the same time into chord/unison steps. */
-export function groupNotesIntoSteps(notes: RawNote[]): LessonStep[] {
+/**
+ * Groups notes that sound at (nearly) the same time into chord/unison steps.
+ *
+ * `tolerance` defaults to a real-time fudge factor for sources with imprecise
+ * timing (MIDI, audio transcription). Symbolic sources with exact integer
+ * tick times (e.g. MusicXML) should pass 0 — simultaneity there is either
+ * exact or not, and a nonzero tolerance risks merging genuinely offset notes.
+ */
+export function groupNotesIntoSteps(
+  notes: RawNote[],
+  tolerance: number = CHORD_TOLERANCE_SECONDS
+): LessonStep[] {
   const sorted = [...notes].sort((a, b) => a.time - b.time);
   const steps: LessonStep[] = [];
   let current: RawNote[] = [];
   let groupStartTime = -Infinity;
 
   for (const note of sorted) {
-    if (current.length > 0 && note.time - groupStartTime > CHORD_TOLERANCE_SECONDS) {
+    if (current.length > 0 && note.time - groupStartTime > tolerance) {
       steps.push(toStep(current));
       current = [];
     }
