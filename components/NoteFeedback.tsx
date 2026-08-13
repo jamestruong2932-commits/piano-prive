@@ -81,7 +81,9 @@ export default function NoteFeedback({
             <div key={t.midi} className="flex flex-col items-center gap-1">
               <div
                 className={
-                  detectedMidis.includes(t.midi) ? chipClass.matched : chipClass[t.hand]
+                  detectedMidis.includes(t.midi)
+                    ? `${chipClass.matched} animate-pop-in`
+                    : chipClass[t.hand]
                 }
               >
                 {t.label}

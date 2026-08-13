@@ -82,7 +82,7 @@ export default function PianoKeyboard({
       case "detected":
         return "bg-error/10 ring-2 ring-inset ring-error/60";
       case "both":
-        return "translate-y-[3px] bg-success/25 shadow-inner ring-2 ring-inset ring-success";
+        return "animate-key-correct translate-y-[3px] bg-success/25 shadow-inner ring-2 ring-inset ring-success";
       case "target":
         return targetHandByMidi.get(midi) === "left"
           ? "bg-hand-left/25 ring-[3px] ring-inset ring-hand-left"
@@ -97,7 +97,7 @@ export default function PianoKeyboard({
       case "detected":
         return "bg-forest-deep ring-2 ring-inset ring-error/70";
       case "both":
-        return "translate-y-[2px] bg-success shadow-md ring-2 ring-inset ring-success";
+        return "animate-key-correct translate-y-[2px] bg-success shadow-md ring-2 ring-inset ring-success";
       case "target":
         return targetHandByMidi.get(midi) === "left"
           ? "bg-hand-left shadow-md ring-2 ring-inset ring-hand-left"
@@ -145,7 +145,7 @@ export default function PianoKeyboard({
   return (
     <div
       ref={scrollRef}
-      className="w-full select-none overflow-x-auto rounded-lg border border-hairline [mask-image:linear-gradient(to_right,transparent,black_2%,black_98%,transparent)]"
+      className="scroll-elegant w-full select-none overflow-x-auto rounded-lg border border-hairline [mask-image:linear-gradient(to_right,transparent,black_2%,black_98%,transparent)]"
       style={{ height: 160 }}
     >
       <div className="relative h-full" style={{ width: totalWidth }}>

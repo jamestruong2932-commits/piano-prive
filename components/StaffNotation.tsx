@@ -272,7 +272,7 @@ export default function StaffNotation({ steps, currentIndex, onSeek }: StaffNota
   return (
     <div
       ref={containerRef}
-      className="w-full overflow-x-auto rounded-2xl border border-hairline bg-background-elevated py-4 [mask-image:linear-gradient(to_right,transparent,black_4%,black_96%,transparent)]"
+      className="scroll-elegant w-full overflow-x-auto rounded-2xl border border-hairline bg-background-elevated py-4 [mask-image:linear-gradient(to_right,transparent,black_4%,black_96%,transparent)]"
     />
   );
 }

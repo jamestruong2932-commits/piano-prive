@@ -69,6 +69,111 @@ body {
   color: var(--forest-deep);
 }
 
+/* Consistent keyboard-focus ring across all interactive elements, instead of
+   relying on inconsistent browser default outlines against a dark theme. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* Themed scrollbar for the horizontally-scrolling staff/keyboard strips —
+   the default OS scrollbar (bulky, grey) breaks the app's chrome otherwise. */
+.scroll-elegant {
+  scrollbar-width: thin;
+  scrollbar-color: var(--gold-soft) transparent;
+}
+
+.scroll-elegant::-webkit-scrollbar {
+  height: 6px;
+}
+
+.scroll-elegant::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-elegant::-webkit-scrollbar-thumb {
+  background-color: var(--gold-soft);
+  border-radius: 999px;
+}
+
+/* Hero backdrop: a continuous strip of piano key seams (proportioned like a
+   real octave — 7 white keys, 5 black) drifting sideways forever. Two
+   `repeating-linear-gradient` layers (black-key blocks + white-key hairlines)
+   share the same 168px repeat width so they stay in lockstep as they scroll. */
+.piano-hero-bg {
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0,
+      transparent 17px,
+      var(--forest-deep) 17px,
+      var(--forest-deep) 31px,
+      transparent 31px,
+      transparent 41px,
+      var(--forest-deep) 41px,
+      var(--forest-deep) 55px,
+      transparent 55px,
+      transparent 89px,
+      var(--forest-deep) 89px,
+      var(--forest-deep) 103px,
+      transparent 103px,
+      transparent 113px,
+      var(--forest-deep) 113px,
+      var(--forest-deep) 127px,
+      transparent 127px,
+      transparent 137px,
+      var(--forest-deep) 137px,
+      var(--forest-deep) 151px,
+      transparent 151px,
+      transparent 168px
+    ),
+    repeating-linear-gradient(90deg, var(--hairline) 0, var(--hairline) 1px, transparent 1px, transparent 24px);
+  background-position: 0 0, 0 0;
+  opacity: 0.55;
+  animation: piano-drift 22s linear infinite;
+  mask-image: linear-gradient(to bottom, transparent, black 35%, black 75%, transparent),
+    linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+  mask-composite: intersect;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, black 35%, black 75%, transparent),
+    linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+  -webkit-mask-composite: source-in;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .piano-hero-bg {
+    animation: none;
+  }
+}
+
+@keyframes piano-drift {
+  from {
+    background-position: 0 0, 0 0;
+  }
+  to {
+    background-position: -168px 0, -168px 0;
+  }
+}
+
+@keyframes orb-drift {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    transform: translate(-46%, -54%) scale(1.08);
+  }
+}
+
+.hero-glow {
+  animation: orb-drift 12s ease-in-out infinite;
+}
+
 @keyframes pop-in {
   from {
     opacity: 0;
@@ -111,4 +216,91 @@ body {
 
 .animate-pulse-gold {
   animation: pulse-gold 2s ease-out infinite;
+}
+
+/* Mouse-reactive glow that trails the cursor across the hero — HeroStage
+   updates --mx/--my on pointer move; the var() fallbacks keep it centered
+   before the first move (and on touch devices, which never fire it). */
+.hero-spotlight {
+  background: radial-gradient(circle 260px at var(--mx, 50%) var(--my, 15%), var(--gold) 0%, transparent 70%);
+  opacity: 0.22;
+  transition: opacity 0.4s ease;
+}
+
+/* Slow gold sweep across the headline text — reads as a light catching
+   polished wood/brass, not a loud effect, so it stays subtle and periodic. */
+.shimmer-text {
+  background: linear-gradient(100deg, var(--foreground) 42%, var(--gold-soft) 50%, var(--foreground) 58%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer-sweep 6s ease-in-out infinite;
+}
+
+@keyframes shimmer-sweep {
+  0%,
+  15% {
+    background-position: 200% 0;
+  }
+  85%,
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-text {
+    animation: none;
+    background: none;
+    color: var(--foreground);
+  }
+}
+
+/* One-shot glow burst on a piano key the instant it's detected as correctly
+   played — fires again each re-trigger since the class is only ever applied
+   for the render where the match is fresh (see PianoKeyboard's key prop). */
+@keyframes key-correct-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--success) 55%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 16px color-mix(in srgb, var(--success) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+.animate-key-correct {
+  animation: key-correct-pulse 0.7s ease-out;
+}
+
+/* Confetti burst on lesson completion. Each piece is a plain div; JS only
+   randomizes per-piece left offset / rotation / delay via inline style. */
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(-10vh) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(60vh) rotate(540deg);
+    opacity: 0;
+  }
+}
+
+.confetti-piece {
+  position: absolute;
+  top: 0;
+  width: 8px;
+  height: 14px;
+  animation-name: confetti-fall;
+  animation-timing-function: cubic-bezier(0.35, 0, 0.65, 1);
+  animation-fill-mode: forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confetti-piece {
+    display: none;
+  }
 }

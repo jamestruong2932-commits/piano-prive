@@ -46,11 +46,23 @@ export default function LessonLibrary({ builtInLessons }: LessonLibraryProps) {
             <div key={lesson.id} className="relative">
               <Link
                 href={`/practice/${lesson.id}`}
-                className="group animate-fade-in-up flex flex-col overflow-hidden rounded-2xl border border-hairline bg-background-elevated transition-all duration-300 hover:-translate-y-0.5 hover:border-gold hover:shadow-[0_8px_30px_-12px_var(--gold)]"
+                className="group animate-fade-in-up flex flex-col overflow-hidden rounded-2xl border border-hairline bg-background-elevated/80 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-gold hover:shadow-[0_8px_30px_-12px_var(--gold)]"
                 style={{ animationDelay: `${index * 80}ms` }}
               >
-                <div className="relative flex h-28 items-center justify-center bg-gradient-to-br from-forest-deep via-forest to-gold/40">
-                  <span className="font-display text-4xl font-semibold text-gold-soft/80">
+                <div className="relative flex h-28 items-center justify-center overflow-hidden bg-gradient-to-br from-forest-deep via-forest to-gold/40">
+                  <div
+                    aria-hidden
+                    className="absolute inset-0 flex opacity-25 transition-opacity duration-300 group-hover:opacity-40"
+                  >
+                    {Array.from({ length: 16 }).map((_, i) => (
+                      <div
+                        key={i}
+                        className="h-full flex-1 border-r border-background/40 last:border-r-0"
+                      />
+                    ))}
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-forest-deep/70 via-transparent to-transparent" />
+                  <span className="relative font-display text-4xl font-semibold text-gold-soft/90 transition-transform duration-300 group-hover:scale-110">
                     {String(index + 1).padStart(2, "0")}
                   </span>
                 </div>

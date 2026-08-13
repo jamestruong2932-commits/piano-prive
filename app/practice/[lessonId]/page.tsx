@@ -15,7 +15,7 @@ export default async function PracticePage({ params }: PracticePageProps) {
   const { lessonId } = await params;
 
   return (
-    <div className="flex flex-1 flex-col items-center px-4 py-10 sm:py-16">
+    <div className="flex flex-1 flex-col items-center justify-center px-4 py-10 sm:py-16">
       <div className="w-full max-w-2xl">
         <PracticeSession lessonId={lessonId} />
       </div>

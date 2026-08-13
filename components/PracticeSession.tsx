@@ -9,6 +9,7 @@ import { noteLabelToMidi } from "@/lib/noteUtils";
 import { usePitchDetector } from "@/lib/pitchDetection";
 import PianoKeyboard from "./PianoKeyboard";
 import NoteFeedback from "./NoteFeedback";
+import Confetti from "./Confetti";
 
 // VexFlow needs a DOM to render into and is a sizable dependency (music
 // glyph fonts) — only load it client-side, on the practice screen.
@@ -31,6 +32,12 @@ type LessonState =
   | { status: "loading" }
   | { status: "found"; lesson: Lesson }
   | { status: "not-found" };
+
+function formatElapsed(totalSeconds: number): string {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
 
 function initialLessonState(lessonId: string): LessonState {
   const builtIn = getLessonById(lessonId);
@@ -73,7 +80,9 @@ export default function PracticeSession({ lessonId }: PracticeSessionProps) {
 function ActivePractice({ lesson }: { lesson: Lesson }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [justAdvanced, setJustAdvanced] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState<number | null>(null);
   const stableCountRef = useRef(0);
+  const startTimeRef = useRef<number | null>(null);
 
   const isComplete = currentIndex >= lesson.steps.length;
   const currentStep = isComplete ? null : lesson.steps[currentIndex];
@@ -111,6 +120,18 @@ function ActivePractice({ lesson }: { lesson: Lesson }) {
     !isComplete && targetNotes.every((t) => detectedMidis.has(t.midi));
 
   useEffect(() => {
+    if (permission === "granted" && startTimeRef.current === null) {
+      startTimeRef.current = Date.now();
+    }
+  }, [permission]);
+
+  useEffect(() => {
+    if (isComplete && startTimeRef.current !== null) {
+      setElapsedSeconds(Math.round((Date.now() - startTimeRef.current) / 1000));
+    }
+  }, [isComplete]);
+
+  useEffect(() => {
     if (isComplete) return;
 
     if (isStepCorrectNow) {
@@ -134,6 +155,8 @@ function ActivePractice({ lesson }: { lesson: Lesson }) {
 
   const handleRestart = () => {
     stableCountRef.current = 0;
+    startTimeRef.current = Date.now();
+    setElapsedSeconds(null);
     setCurrentIndex(0);
   };
 
@@ -145,17 +168,17 @@ function ActivePractice({ lesson }: { lesson: Lesson }) {
 
   return (
     <div className="flex w-full flex-col items-center gap-8">
-      <div className="flex w-full items-center justify-between">
+      <div className="grid w-full grid-cols-[1fr_auto_1fr] items-center gap-3">
         <Link
           href="/"
-          className="text-xs uppercase tracking-widest text-muted transition-colors hover:text-gold"
+          className="justify-self-start whitespace-nowrap text-xs uppercase tracking-widest text-muted transition-colors hover:text-gold"
         >
-          ← Danh sách bài học
+          <span aria-hidden>←</span> <span className="hidden sm:inline">Danh sách bài học</span>
         </Link>
-        <h1 className="font-display text-xl font-medium text-foreground">
+        <h1 className="max-w-[60vw] truncate font-display text-lg font-medium text-foreground sm:max-w-none sm:text-xl">
           {lesson.title}
         </h1>
-        <div className="w-24" />
+        <div />
       </div>
 
       {permission === "idle" && (
@@ -201,16 +224,22 @@ function ActivePractice({ lesson }: { lesson: Lesson }) {
       )}
 
       {permission === "granted" && isComplete && (
-        <div className="flex flex-col items-center gap-4 py-4">
-          <div className="animate-pop-in flex h-16 w-16 items-center justify-center rounded-full border border-gold text-2xl text-gold">
+        <div className="relative flex flex-col items-center gap-4 py-4">
+          <Confetti />
+          <div className="hero-glow pointer-events-none absolute left-1/2 top-1/2 h-64 w-64 rounded-full bg-gold/25 blur-[90px]" />
+          <div className="animate-pop-in relative flex h-16 w-16 items-center justify-center rounded-full border border-gold text-2xl text-gold shadow-[0_0_30px_-6px_var(--gold)]">
             ✦
           </div>
-          <p className="animate-fade-in-up font-display text-2xl font-semibold text-foreground">
+          <p className="shimmer-text animate-fade-in-up font-display text-3xl font-semibold">
             Hoàn thành bài học
+          </p>
+          <p className="animate-fade-in-up text-xs uppercase tracking-widest text-muted">
+            {allMidis.length} nốt
+            {elapsedSeconds !== null && ` · ${formatElapsed(elapsedSeconds)}`}
           </p>
           <button
             onClick={handleRestart}
-            className="rounded-full border border-gold px-6 py-3 text-xs font-medium uppercase tracking-widest text-gold transition-colors hover:bg-gold hover:text-forest-deep"
+            className="relative rounded-full border border-gold px-6 py-3 text-xs font-medium uppercase tracking-widest text-gold shadow-[0_0_20px_-8px_var(--gold)] transition-colors hover:bg-gold hover:text-forest-deep"
           >
             Luyện lại từ đầu
           </button>
