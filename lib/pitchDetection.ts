@@ -4,9 +4,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { PitchDetector } from "pitchy";
 import { frequencyToNote, midiToFrequency, type NoteInfo } from "./noteUtils";
 
+// Small window for monophonic pitch tracking (McLeod Pitch Method): a piano
+// note's onset transient (hammer strike, inharmonic) pollutes whatever window
+// it falls in, so a short window clears the transient and reaches a clean,
+// periodic-enough signal fast. A large window here made single-note detection
+// noticeably less responsive, often requiring several strikes to register.
+const MONO_FFT_SIZE = 2048;
 // Large enough to resolve semitones down near C3 (piano bass notes used in
 // two-hand lessons) when scanning the frequency spectrum for chord detection.
-const FFT_SIZE = 8192;
+// Only used on the multi-note path, so it doesn't affect single-note latency.
+const CHORD_FFT_SIZE = 8192;
 const MIN_CLARITY = 0.9;
 const MIN_FREQUENCY = 27.5; // A0, lowest piano key
 const MAX_FREQUENCY = 4186; // C8, highest piano key
@@ -132,20 +139,24 @@ export function usePitchDetector(candidateMidis: number[]): UsePitchDetectorResu
       audioContextRef.current = audioContext;
 
       const source = audioContext.createMediaStreamSource(stream);
-      const analyser = audioContext.createAnalyser();
-      analyser.fftSize = FFT_SIZE;
-      source.connect(analyser);
+      const monoAnalyser = audioContext.createAnalyser();
+      monoAnalyser.fftSize = MONO_FFT_SIZE;
+      source.connect(monoAnalyser);
 
-      const detector = PitchDetector.forFloat32Array(analyser.fftSize);
+      const chordAnalyser = audioContext.createAnalyser();
+      chordAnalyser.fftSize = CHORD_FFT_SIZE;
+      source.connect(chordAnalyser);
+
+      const detector = PitchDetector.forFloat32Array(monoAnalyser.fftSize);
       detector.clarityThreshold = MIN_CLARITY;
       const timeInput = new Float32Array(detector.inputLength);
-      const freqInput = new Float32Array(analyser.frequencyBinCount);
-      const binWidth = audioContext.sampleRate / analyser.fftSize;
+      const freqInput = new Float32Array(chordAnalyser.frequencyBinCount);
+      const binWidth = audioContext.sampleRate / CHORD_FFT_SIZE;
 
       setPermission("granted");
 
       const tick = () => {
-        analyser.getFloatTimeDomainData(timeInput);
+        monoAnalyser.getFloatTimeDomainData(timeInput);
         const [frequency, clarity] = detector.findPitch(timeInput, audioContext.sampleRate);
 
         const hasClearPitch =
@@ -163,7 +174,7 @@ export function usePitchDetector(candidateMidis: number[]): UsePitchDetectorResu
               ? new Set([note.midi])
               : new Set();
         } else {
-          analyser.getFloatFrequencyData(freqInput);
+          chordAnalyser.getFloatFrequencyData(freqInput);
           const noiseFloorDb = estimateNoiseFloorDb(freqInput);
           matched = new Set(
             candidates.filter((midi) =>
