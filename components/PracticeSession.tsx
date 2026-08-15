@@ -83,6 +83,16 @@ function ActivePractice({ lesson }: { lesson: Lesson }) {
   const [elapsedSeconds, setElapsedSeconds] = useState<number | null>(null);
   const stableCountRef = useRef(0);
   const startTimeRef = useRef<number | null>(null);
+  // A struck piano note keeps ringing for a while after the strike. If the
+  // next step wants the same pitch again (or a chord that reuses one), the
+  // decaying tail of the previous strike still reads as "sounding" and would
+  // instantly satisfy the next step too — crediting one strike as two. Midis
+  // in here are still ringing from the strike that satisfied the previous
+  // step, so they're locked out of counting again (for the purpose of
+  // advancing) until they actually go silent, i.e. a real new attack. Only
+  // read/written from the effect below, never during render, so a plain ref
+  // is fine — it doesn't need to trigger a re-render on its own.
+  const pendingReattackRef = useRef<Set<number>>(new Set());
 
   const isComplete = currentIndex >= lesson.steps.length;
   const currentStep = isComplete ? null : lesson.steps[currentIndex];
@@ -116,6 +126,9 @@ function ActivePractice({ lesson }: { lesson: Lesson }) {
     return { rangeStart: start, rangeEnd: end };
   }, [allMidis]);
 
+  // Visual/display only — whether the target notes are currently sounding,
+  // regardless of the reattack lock. Advancing uses a separate, stricter
+  // check inside the effect below.
   const isStepCorrectNow =
     !isComplete && targetNotes.every((t) => detectedMidis.has(t.midi));
 
@@ -134,27 +147,46 @@ function ActivePractice({ lesson }: { lesson: Lesson }) {
   useEffect(() => {
     if (isComplete) return;
 
-    if (isStepCorrectNow) {
+    // A locked note only unlocks once it's genuinely gone quiet — that's
+    // the "release" that makes the next strike of the same pitch a real
+    // new attack rather than the same ringing note.
+    for (const midi of pendingReattackRef.current) {
+      if (!detectedMidis.has(midi)) pendingReattackRef.current.delete(midi);
+    }
+
+    const canAdvance = targetNotes.every(
+      (t) => detectedMidis.has(t.midi) && !pendingReattackRef.current.has(t.midi)
+    );
+
+    if (canAdvance) {
       stableCountRef.current += 1;
       if (stableCountRef.current >= STABLE_FRAMES_REQUIRED) {
         stableCountRef.current = 0;
+        const nextIndex = currentIndex + 1;
+        // A repeated note (or a chord sharing a note with this step) may
+        // still be ringing from the strike that just satisfied this step —
+        // lock it so it can't also satisfy the next step for free.
+        for (const n of lesson.steps[nextIndex]?.notes ?? []) {
+          const midi = noteLabelToMidi(n.note);
+          if (detectedMidis.has(midi)) pendingReattackRef.current.add(midi);
+        }
         setJustAdvanced(true);
-        setCurrentIndex((i) => i + 1);
+        setCurrentIndex(nextIndex);
         window.setTimeout(() => setJustAdvanced(false), 400);
       }
     } else {
       stableCountRef.current = 0;
     }
     // Keyed on `detectedMidis` (a new Set reference every detector tick),
-    // not on `isStepCorrectNow` — that's a derived boolean that can stay
-    // `true` across many consecutive ticks without its value ever
-    // "changing", which would stop this effect from re-running at all and
-    // freeze the stable-frame count at 1 forever for a very steady signal.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [detectedMidis, isComplete]);
+    // not on a derived boolean — a derived value can stay `true` across
+    // many consecutive ticks without its value ever "changing", which would
+    // stop this effect from re-running at all and freeze the stable-frame
+    // count at 1 forever for a very steady signal.
+  }, [detectedMidis, isComplete, currentIndex, lesson.steps, targetNotes]);
 
   const handleRestart = () => {
     stableCountRef.current = 0;
+    pendingReattackRef.current.clear();
     startTimeRef.current = Date.now();
     setElapsedSeconds(null);
     setCurrentIndex(0);
@@ -162,6 +194,7 @@ function ActivePractice({ lesson }: { lesson: Lesson }) {
 
   const handleSeek = (index: number) => {
     stableCountRef.current = 0;
+    pendingReattackRef.current.clear();
     setJustAdvanced(false);
     setCurrentIndex(Math.max(0, Math.min(index, lesson.steps.length - 1)));
   };

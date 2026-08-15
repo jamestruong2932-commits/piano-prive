@@ -100,63 +100,197 @@ select:focus-visible {
   border-radius: 999px;
 }
 
-/* Hero backdrop: a continuous strip of piano key seams (proportioned like a
-   real octave — 7 white keys, 5 black) drifting sideways forever. Two
-   `repeating-linear-gradient` layers (black-key blocks + white-key hairlines)
-   share the same 168px repeat width so they stay in lockstep as they scroll. */
-.piano-hero-bg {
+/* Hero lamp: a bright gold spotlight — a glowing neckline (two stacked
+   halo blurs + a crisp bright line, the same three-layer trick the classic
+   CSS "lamp" effect uses for a hot-looking light source) converging into a
+   beam that falls all the way to a real white/black piano-key strip along
+   the bottom edge. A handful of the most-centered keys glow gold in a
+   staggered loop, as if the light itself is playing them. Keys use literal
+   ivory/near-black, not the app's gold/forest theme — the theme colors live
+   in the light and backdrop, not the keys. */
+.hero-lamp-halo-wide {
   position: absolute;
-  inset: 0;
-  background-image:
-    repeating-linear-gradient(
-      90deg,
-      transparent 0,
-      transparent 17px,
-      var(--forest-deep) 17px,
-      var(--forest-deep) 31px,
-      transparent 31px,
-      transparent 41px,
-      var(--forest-deep) 41px,
-      var(--forest-deep) 55px,
-      transparent 55px,
-      transparent 89px,
-      var(--forest-deep) 89px,
-      var(--forest-deep) 103px,
-      transparent 103px,
-      transparent 113px,
-      var(--forest-deep) 113px,
-      var(--forest-deep) 127px,
-      transparent 127px,
-      transparent 137px,
-      var(--forest-deep) 137px,
-      var(--forest-deep) 151px,
-      transparent 151px,
-      transparent 168px
-    ),
-    repeating-linear-gradient(90deg, var(--hairline) 0, var(--hairline) 1px, transparent 1px, transparent 24px);
-  background-position: 0 0, 0 0;
-  opacity: 0.55;
-  animation: piano-drift 22s linear infinite;
-  mask-image: linear-gradient(to bottom, transparent, black 35%, black 75%, transparent),
-    linear-gradient(to right, transparent, black 8%, black 92%, transparent);
-  mask-composite: intersect;
-  -webkit-mask-image: linear-gradient(to bottom, transparent, black 35%, black 75%, transparent),
-    linear-gradient(to right, transparent, black 8%, black 92%, transparent);
-  -webkit-mask-composite: source-in;
+  left: 50%;
+  top: 16%;
+  width: min(75%, 640px);
+  height: 240px;
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+  background: var(--gold);
+  opacity: 0.1;
+  filter: blur(100px);
+  mix-blend-mode: screen;
+  animation: hero-lamp-flicker 4s ease-in-out infinite;
+}
+
+.hero-lamp-halo-tight {
+  position: absolute;
+  left: 50%;
+  top: 16%;
+  width: min(42%, 360px);
+  height: 150px;
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+  background: var(--gold-soft);
+  opacity: 0.18;
+  filter: blur(48px);
+  mix-blend-mode: screen;
+  animation: hero-lamp-flicker 4s ease-in-out infinite;
+}
+
+.hero-lamp-neckline {
+  position: absolute;
+  left: 50%;
+  top: 16%;
+  width: min(52%, 400px);
+  height: 4px;
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--gold-soft) 12%,
+    #fff6df 50%,
+    var(--gold-soft) 88%,
+    transparent
+  );
+  filter: blur(2px);
+  opacity: 0.8;
+  box-shadow: 0 0 24px 4px color-mix(in srgb, var(--gold-soft) 60%, transparent);
+  animation: hero-lamp-flicker 4s ease-in-out infinite;
+}
+
+.hero-lamp-beam {
+  position: absolute;
+  left: 50%;
+  top: 16%;
+  bottom: 0;
+  width: min(62%, 520px);
+  transform: translateX(-50%);
+  /* Straight-sided wedge — both edges taper in a single unbroken line from
+     top to bottom. The blur filter alone is enough to soften the corners,
+     so no intermediate clip-path points are needed (those previously had a
+     different slope than the main edge and read as a kink/bend). */
+  clip-path: polygon(47% 0%, 53% 0%, 100% 100%, 0% 100%);
+  /* Feather the wedge's silhouette in every direction — not just left/right
+     but also the top tip and bottom base — so it dissolves into the
+     backdrop the same way the halo above it does, instead of reading as a
+     shape with an edge once blurred. */
+  mask-image: radial-gradient(ellipse 58% 90% at 50% 8%, black 0%, black 28%, transparent 88%);
+  -webkit-mask-image: radial-gradient(ellipse 58% 90% at 50% 8%, black 0%, black 28%, transparent 88%);
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, #fff6df 52%, transparent) 0%,
+    color-mix(in srgb, var(--gold-soft) 42%, transparent) 28%,
+    color-mix(in srgb, var(--gold) 28%, transparent) 62%,
+    color-mix(in srgb, var(--gold) 12%, transparent) 100%
+  );
+  filter: blur(38px);
+  mix-blend-mode: screen;
+  opacity: 0.4;
+}
+
+.hero-lamp-pool {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: min(85%, 560px);
+  height: 150px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: var(--gold);
+  filter: blur(60px);
+  opacity: 0.26;
+  mix-blend-mode: screen;
+}
+
+@keyframes hero-lamp-flicker {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .piano-hero-bg {
+  .hero-lamp-halo-wide,
+  .hero-lamp-halo-tight,
+  .hero-lamp-neckline {
     animation: none;
   }
 }
 
-@keyframes piano-drift {
-  from {
-    background-position: 0 0, 0 0;
+.hero-keys {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  height: 5rem;
+  mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 4%, black 96%, transparent);
+}
+
+@media (min-width: 640px) {
+  .hero-keys {
+    height: 6.5rem;
   }
-  to {
-    background-position: -168px 0, -168px 0;
+}
+
+.hero-keys-inner {
+  position: relative;
+  display: flex;
+  flex: none;
+  height: 100%;
+}
+
+.hero-key-white {
+  position: relative;
+  flex: none;
+  height: 100%;
+  border-radius: 4px 4px 8px 8px;
+  background: linear-gradient(to bottom, #ffffff, #eee7d6);
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: inset 0 -10px 14px -10px rgba(0, 0, 0, 0.16);
+}
+
+.hero-key-black {
+  position: absolute;
+  top: 0;
+  height: 62%;
+  border-radius: 3px 3px 6px 6px;
+  background: linear-gradient(to bottom, #3c3c3c, #070707);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.hero-key-lit,
+.hero-key-lit-black {
+  animation: hero-key-glow 3.2s ease-in-out infinite;
+}
+
+@keyframes hero-key-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+    filter: brightness(1);
+  }
+  35% {
+    box-shadow: 0 -4px 18px 2px color-mix(in srgb, var(--gold) 70%, transparent);
+    filter: brightness(1.18);
+    transform: translateY(1px);
+  }
+  60% {
+    box-shadow: 0 0 0 0 transparent;
+    filter: brightness(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-key-lit,
+  .hero-key-lit-black {
+    animation: none;
   }
 }
 
@@ -235,7 +369,19 @@ select:focus-visible {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  /* drop-shadow (not text-shadow) so it still reads against the bright hero
+     lamp behind it — it shadows the rendered glyph pixels, not the
+     (transparent) fill color the gradient-clip leaves behind. */
+  filter: drop-shadow(0 3px 16px rgba(0, 0, 0, 0.55));
   animation: shimmer-sweep 6s ease-in-out infinite;
+}
+
+/* Solid-color hero copy (eyebrow, subtext) sitting directly in the lamp
+   beam's hottest spot needs its own dark shadow to stay legible — plain
+   `text-gold`/`text-muted` on a bright gold glow is low-contrast enough to
+   nearly disappear. */
+.hero-copy-shadow {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 2px 16px rgba(0, 0, 0, 0.6);
 }
 
 @keyframes shimmer-sweep {

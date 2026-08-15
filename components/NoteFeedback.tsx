@@ -15,12 +15,15 @@ interface NoteFeedbackProps {
   onSeek?: (index: number) => void;
 }
 
+// Plain sans, not the display serif: Playfair's stylistic C/G are easy to
+// mix up at a glance, which matters here since these letters are read
+// mid-performance, not admired as typography.
 const chipClass: Record<"left" | "right" | "matched", string> = {
   right:
-    "flex h-14 min-w-14 items-center justify-center rounded-full border-2 border-hand-right bg-hand-right/20 px-3 font-display text-2xl font-semibold text-hand-right transition-colors duration-300",
-  left: "flex h-14 min-w-14 items-center justify-center rounded-full border-2 border-hand-left bg-hand-left/20 px-3 font-display text-2xl font-semibold text-hand-left transition-colors duration-300",
+    "flex h-14 min-w-14 items-center justify-center rounded-full border-2 border-hand-right bg-hand-right/20 px-3 font-sans text-2xl font-bold text-hand-right transition-colors duration-300",
+  left: "flex h-14 min-w-14 items-center justify-center rounded-full border-2 border-hand-left bg-hand-left/20 px-3 font-sans text-2xl font-bold text-hand-left transition-colors duration-300",
   matched:
-    "flex h-14 min-w-14 items-center justify-center rounded-full border-2 border-success bg-success/15 px-3 font-display text-2xl font-semibold text-success transition-colors duration-300",
+    "flex h-14 min-w-14 items-center justify-center rounded-full border-2 border-success bg-success/15 px-3 font-sans text-2xl font-bold text-success transition-colors duration-300",
 };
 
 const handTag: Record<"left" | "right", string> = { left: "Tay trái", right: "Tay phải" };

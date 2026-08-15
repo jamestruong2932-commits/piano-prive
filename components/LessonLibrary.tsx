@@ -4,8 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { Lesson } from "@/lib/lessons";
 import { deleteImportedLesson, getImportedLessons } from "@/lib/importedLessons";
-import ImportMidiButton from "./ImportMidiButton";
-import ImportMp3Button from "./ImportMp3Button";
 
 interface LessonLibraryProps {
   builtInLessons: Lesson[];
@@ -27,16 +25,6 @@ export default function LessonLibrary({ builtInLessons }: LessonLibraryProps) {
 
   return (
     <div className="w-full">
-      <div className="mb-8 flex flex-col items-center gap-4">
-        <ImportMidiButton />
-        <div className="flex items-center gap-3 text-[10px] uppercase tracking-widest text-muted">
-          <span className="h-px w-8 bg-hairline" />
-          hoặc
-          <span className="h-px w-8 bg-hairline" />
-        </div>
-        <ImportMp3Button />
-      </div>
-
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         {lessons.map((lesson, index) => {
           const allNotes = lesson.steps.flatMap((step) => step.notes);
