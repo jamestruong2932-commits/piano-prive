@@ -117,10 +117,13 @@ select:focus-visible {
 /* On narrow phone screens the same 80%-wide ellipse spans edge-to-edge
    instead of leaving dark corners the way it does on a wide desktop
    viewport, so it reads as a much more solid, glaring wash at the same
-   opacity — dial it back further here. */
+   opacity. Shrink the ellipse itself (not just its opacity) so it reads as
+   a contained spot back near the wordmark instead of a wash across the
+   whole top of the screen. */
 @media (max-width: 640px) {
   .hero-wash {
-    opacity: 0.08;
+    background: radial-gradient(ellipse 55% 32% at 50% -6%, var(--gold) 0%, transparent 100%);
+    opacity: 0.14;
   }
 }
 
