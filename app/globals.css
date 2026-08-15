@@ -114,6 +114,16 @@ select:focus-visible {
   opacity: 0.16;
 }
 
+/* On narrow phone screens the same 80%-wide ellipse spans edge-to-edge
+   instead of leaving dark corners the way it does on a wide desktop
+   viewport, so it reads as a much more solid, glaring wash at the same
+   opacity — dial it back further here. */
+@media (max-width: 640px) {
+  .hero-wash {
+    opacity: 0.08;
+  }
+}
+
 .hero-lamp-halo-wide {
   position: absolute;
   left: 50%;
