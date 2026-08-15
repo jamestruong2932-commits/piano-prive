@@ -78,24 +78,24 @@ export default function PianoKeyboard({
   const whiteKeyClass = (midi: number): string => {
     switch (keyState(midi)) {
       case "idle":
-        return "bg-background-elevated hover:bg-gold-soft/15";
+        return "bg-key-white hover:bg-gold-soft/25";
       case "detected":
-        return "bg-error/10 ring-2 ring-inset ring-error/60";
+        return "bg-error/25 ring-2 ring-inset ring-error/70";
       case "both":
-        return "animate-key-correct translate-y-[3px] bg-success/25 shadow-inner ring-2 ring-inset ring-success";
+        return "animate-key-correct translate-y-[3px] bg-success/40 shadow-inner ring-2 ring-inset ring-success";
       case "target":
         return targetHandByMidi.get(midi) === "left"
-          ? "bg-hand-left/25 ring-[3px] ring-inset ring-hand-left"
-          : "bg-hand-right/25 ring-[3px] ring-inset ring-hand-right";
+          ? "bg-hand-left/30 ring-[3px] ring-inset ring-hand-left"
+          : "bg-hand-right/30 ring-[3px] ring-inset ring-hand-right";
     }
   };
 
   const blackKeyClass = (midi: number): string => {
     switch (keyState(midi)) {
       case "idle":
-        return "bg-forest-deep";
+        return "bg-key-black";
       case "detected":
-        return "bg-forest-deep ring-2 ring-inset ring-error/70";
+        return "bg-key-black ring-2 ring-inset ring-error/70";
       case "both":
         return "animate-key-correct translate-y-[2px] bg-success shadow-md ring-2 ring-inset ring-success";
       case "target":
@@ -158,7 +158,7 @@ export default function PianoKeyboard({
               title={midiToLabel(midi)}
             >
               {handBadge(midi, "white")}
-              <span className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[10px] text-muted">
+              <span className="absolute bottom-1 left-1/2 -translate-x-1/2 text-[10px] text-key-black/60">
                 {midiToLabel(midi)}
               </span>
             </div>

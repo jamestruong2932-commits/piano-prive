@@ -37,14 +37,48 @@ export default function NoteFeedback({
 }: NoteFeedbackProps) {
   const percent = Math.round((progress.current / progress.total) * 100);
   const isChord = targetNotes.length > 1;
+  const currentIndex = progress.current - 1;
+  const canGoPrev = !!onSeek && currentIndex > 0;
+  const canGoNext = !!onSeek && currentIndex < progress.total - 1;
 
   return (
     <div className="flex w-full flex-col items-center gap-4">
-      <div className="w-full max-w-xs">
-        <div className="mb-1.5 flex items-center justify-between text-xs uppercase tracking-widest text-muted">
-          <span>
+      {onSeek && (
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={() => onSeek(currentIndex - 1)}
+            disabled={!canGoPrev}
+            aria-label="Bước trước"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-hairline text-sm text-foreground transition-colors hover:border-gold hover:text-gold disabled:pointer-events-none disabled:opacity-30"
+          >
+            ‹
+          </button>
+          <span className="text-xs uppercase tracking-widest text-muted">
             Bước {progress.current} / {progress.total}
           </span>
+          <button
+            type="button"
+            onClick={() => onSeek(currentIndex + 1)}
+            disabled={!canGoNext}
+            aria-label="Bước sau"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-hairline text-sm text-foreground transition-colors hover:border-gold hover:text-gold disabled:pointer-events-none disabled:opacity-30"
+          >
+            ›
+          </button>
+        </div>
+      )}
+      <div className="w-full max-w-xs">
+        <div
+          className={`mb-1.5 flex items-center text-xs uppercase tracking-widest text-muted ${
+            onSeek ? "justify-end" : "justify-between"
+          }`}
+        >
+          {!onSeek && (
+            <span>
+              Bước {progress.current} / {progress.total}
+            </span>
+          )}
           <span>{percent}%</span>
         </div>
         {onSeek ? (

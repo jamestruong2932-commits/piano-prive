@@ -28,6 +28,16 @@
      tones the way --forest does. Right hand keeps --gold for continuity. */
   --hand-left: #6fb8e8;
   --hand-right: #e8b866;
+  /* Literal piano-key and sheet-music colors — deliberately *not* the
+     forest/gold theme tokens. The practice keyboard/staff used to sit in
+     --background-elevated/--forest-deep (both dark), which read as barely
+     distinguishable from the page background around them. A real keyboard
+     and a real page of sheet music are white and black regardless of the
+     app's color scheme, so they get their own fixed tokens. */
+  --key-white: #f6f1e4;
+  --key-black: #14100c;
+  --sheet-paper: #f6f2e6;
+  --sheet-ink: #1c1a16;
 }
 
 @theme inline {
@@ -44,6 +54,10 @@
   --color-success: var(--success);
   --color-hand-left: var(--hand-left);
   --color-hand-right: var(--hand-right);
+  --color-key-white: var(--key-white);
+  --color-key-black: var(--key-black);
+  --color-sheet-paper: var(--sheet-paper);
+  --color-sheet-ink: var(--sheet-ink);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-display: var(--font-playfair);

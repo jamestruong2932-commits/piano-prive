@@ -52,7 +52,7 @@ function noteNameOnly(note: string): string {
 function colorForIndex(index: number, currentIndex: number, hand: Hand): string {
   if (index < currentIndex) return "var(--success)";
   if (index === currentIndex) return hand === "left" ? "var(--hand-left)" : "var(--hand-right)";
-  return "var(--muted)";
+  return "var(--sheet-ink)";
 }
 
 function buildNote(
@@ -72,9 +72,7 @@ function buildNote(
   });
 
   const color = colorForIndex(index, currentIndex, hand);
-  if (index <= currentIndex) {
-    note.setStyle({ fillStyle: color, strokeStyle: color });
-  }
+  note.setStyle({ fillStyle: color, strokeStyle: color });
 
   const labelText = Array.from(new Set(handNotes.map((n) => noteNameOnly(n.note)))).join("/");
   const label = new Annotation(labelText)
@@ -125,7 +123,7 @@ function highlightCurrentBeat(container: HTMLDivElement, note: StaveNote | Ghost
   rect.setAttribute("height", String(height - 8));
   rect.setAttribute("rx", "6");
   rect.setAttribute("fill", "var(--gold)");
-  rect.setAttribute("opacity", "0.14");
+  rect.setAttribute("opacity", "0.28");
   svg.insertBefore(rect, svg.firstChild);
 }
 
@@ -272,7 +270,7 @@ export default function StaffNotation({ steps, currentIndex, onSeek }: StaffNota
   return (
     <div
       ref={containerRef}
-      className="scroll-elegant w-full overflow-x-auto rounded-2xl border border-hairline bg-background-elevated py-4 [mask-image:linear-gradient(to_right,transparent,black_4%,black_96%,transparent)]"
+      className="scroll-elegant w-full overflow-x-auto rounded-2xl border border-hairline bg-sheet-paper py-4 [mask-image:linear-gradient(to_right,transparent,black_4%,black_96%,transparent)]"
     />
   );
 }
