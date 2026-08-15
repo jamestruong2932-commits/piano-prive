@@ -24,6 +24,7 @@ export default function HeroStage({ children }: { children: React.ReactNode }) {
       onMouseMove={handleMouseMove}
       className="relative flex min-h-[78vh] w-full flex-col justify-start overflow-hidden pt-[3vh] sm:pt-[6vh]"
     >
+      <div className="hero-wash pointer-events-none absolute inset-0" aria-hidden />
       <HeroPianoLamp />
       <div className="hero-spotlight pointer-events-none absolute inset-0" aria-hidden />
       <div

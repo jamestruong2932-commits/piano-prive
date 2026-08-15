@@ -50,16 +50,7 @@
 }
 
 body {
-  /* No `fixed` attachment here: combined with background-blend-mode, iOS/
-     WebKit (including Chrome on iPhone, which is WebKit under the hood)
-     silently drops the blend for fixed backgrounds and paints the raw gold
-     gradient at full strength instead of the intended subtle tint — showing
-     up as an all-gold, broken-looking page on iPhone despite looking correct
-     in desktop Chrome testing. */
-  background:
-    radial-gradient(ellipse 80% 60% at 50% -10%, var(--gold) 0%, transparent 100%),
-    var(--background);
-  background-blend-mode: soft-light, normal;
+  background: var(--background);
   color: var(--foreground);
 }
 
@@ -107,6 +98,22 @@ select:focus-visible {
    staggered loop, as if the light itself is playing them. Keys use literal
    ivory/near-black, not the app's gold/forest theme — the theme colors live
    in the light and backdrop, not the keys. */
+/* Broad warm wash across the top of the hero. Used to live as a
+   radial-gradient on `body`, sized as a percentage of the *entire*
+   scrollable page — on tall mobile layouts that fade-to-transparent point
+   is a percentage of a much taller document, so the first screen only ever
+   showed the still-near-full-strength gold core (reading as an overexposed
+   glare), and blending that same huge gradient via background-blend-mode
+   across a tall scrolling body hit a WebKit/iOS tiling bug that painted a
+   hard-edged seam partway down instead of a smooth fade. Scoping it to the
+   hero's own bounded, overflow-hidden box (and dropping the blend mode)
+   keeps its fade curve — and therefore its brightness — a fixed size no
+   matter how much content follows on a given device. */
+.hero-wash {
+  background: radial-gradient(ellipse 80% 65% at 50% -10%, var(--gold) 0%, transparent 100%);
+  opacity: 0.16;
+}
+
 .hero-lamp-halo-wide {
   position: absolute;
   left: 50%;
