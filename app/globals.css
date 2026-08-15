@@ -57,8 +57,14 @@
 }
 
 body {
+  /* No `fixed` attachment here: combined with background-blend-mode, iOS/
+     WebKit (including Chrome on iPhone, which is WebKit under the hood)
+     silently drops the blend for fixed backgrounds and paints the raw gold
+     gradient at full strength instead of the intended subtle tint — showing
+     up as an all-gold, broken-looking page on iPhone despite looking correct
+     in desktop Chrome testing. */
   background:
-    radial-gradient(ellipse 80% 60% at 50% -10%, var(--gold) 0%, transparent 100%) fixed,
+    radial-gradient(ellipse 80% 60% at 50% -10%, var(--gold) 0%, transparent 100%),
     var(--background);
   background-blend-mode: soft-light, normal;
   color: var(--foreground);

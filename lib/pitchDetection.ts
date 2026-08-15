@@ -32,6 +32,17 @@ const PRESENCE_MARGIN_DB = 8;
 // otherwise "clear" a relative-only threshold).
 const PRESENCE_ABSOLUTE_FLOOR_DB = -75;
 const PRESENCE_BIN_WINDOW = 3;
+// The monophonic path (unlike the chord path above) had no loudness check at
+// all — only clarity/frequency. A piano note's decay tail stays periodic
+// enough to keep reading as a "clear pitch" well after the strike, and its
+// octave harmonic in particular can ring on louder, relatively, than the
+// fading fundamental. If the next lesson step asks for that octave, the
+// still-ringing previous note's harmonic can register as the new note being
+// played before it's actually struck — a false advance ("nhảy nốt"). Gating
+// on RMS loudness rejects that quiet tail while a genuine new strike, which
+// is much louder, still passes easily. Heuristic, not validated against a
+// real piano/mic — expect to retune after real-world testing.
+const MIN_MONO_RMS_DB = -50;
 
 export interface PitchReading {
   note: NoteInfo | null;
@@ -60,6 +71,13 @@ function estimateNoiseFloorDb(freqData: Float32Array): number {
   // spectrum's mass sits at the true background level.
   const sorted = Float32Array.from(freqData).sort();
   return sorted[Math.floor(sorted.length * 0.25)];
+}
+
+function computeRmsDb(timeInput: Float32Array): number {
+  let sumSquares = 0;
+  for (let i = 0; i < timeInput.length; i++) sumSquares += timeInput[i] * timeInput[i];
+  const rms = Math.sqrt(sumSquares / timeInput.length);
+  return 20 * Math.log10(rms || 1e-10);
 }
 
 function isFrequencyPresent(
@@ -160,7 +178,10 @@ export function usePitchDetector(candidateMidis: number[]): UsePitchDetectorResu
         const [frequency, clarity] = detector.findPitch(timeInput, audioContext.sampleRate);
 
         const hasClearPitch =
-          clarity >= MIN_CLARITY && frequency >= MIN_FREQUENCY && frequency <= MAX_FREQUENCY;
+          clarity >= MIN_CLARITY &&
+          frequency >= MIN_FREQUENCY &&
+          frequency <= MAX_FREQUENCY &&
+          computeRmsDb(timeInput) >= MIN_MONO_RMS_DB;
         const note = hasClearPitch ? frequencyToNote(frequency) : null;
         setReading(
           hasClearPitch ? { note, frequency, clarity } : { note: null, frequency: 0, clarity: 0 }

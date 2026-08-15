@@ -23,6 +23,12 @@ const StaffNotation = dynamic(() => import("./StaffNotation"), {
 // threshold for a single frame (~16ms) even while genuinely being held, and
 // requiring a longer unbroken run than that mostly punishes correct playing.
 const STABLE_FRAMES_REQUIRED = 5;
+// A miss only costs this many frames of progress rather than resetting the
+// streak to 0. A held note that's genuinely correct can still drop a single
+// detector frame (mic noise, a momentary dip below the clarity/RMS gates)
+// without losing all progress and forcing a full replay; a real stop/wrong
+// note still unwinds the streak within a couple of frames.
+const STABLE_FRAME_LEAK = 2;
 
 interface PracticeSessionProps {
   lessonId: string;
@@ -175,7 +181,7 @@ function ActivePractice({ lesson }: { lesson: Lesson }) {
         window.setTimeout(() => setJustAdvanced(false), 400);
       }
     } else {
-      stableCountRef.current = 0;
+      stableCountRef.current = Math.max(0, stableCountRef.current - STABLE_FRAME_LEAK);
     }
     // Keyed on `detectedMidis` (a new Set reference every detector tick),
     // not on a derived boolean — a derived value can stay `true` across
