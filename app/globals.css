@@ -1,22 +1,33 @@
 @import "tailwindcss";
 
+/* Always the dark forest/gold palette, regardless of the device's system
+   light/dark setting. The whole visual language — hero lamp, piano-key
+   strip, gold glows — was designed and tuned against this dark palette; the
+   old light-mode variant (cream background under the same gold gradient
+   overlay) was never actually designed and just read as a muddy, broken
+   gold wash. A phone in light mode used to fall back to that variant,
+   which is exactly the "toàn tone màu vàng" bug — so there's now only one
+   palette and it matches what gets tested on desktop. */
 :root {
-  --background: #f6f1e4;
-  --background-elevated: #fbf8f0;
-  --foreground: #1c2b22;
-  --muted: #746b58;
-  --forest: #1f3d2e;
-  --forest-deep: #142a1f;
-  --gold: #b68a4e;
-  --gold-soft: #d9c08b;
-  --hairline: rgba(28, 43, 34, 0.14);
-  --error: #8a3324;
-  --success: #2f6b46;
+  /* Tells the browser not to bother offering a light rendering of native
+     form controls/scrollbars — there isn't one, only dark. */
+  color-scheme: dark;
+  --background: #0e1712;
+  --background-elevated: #16211a;
+  --foreground: #ede4d0;
+  --muted: #a49b87;
+  --forest: #2c5540;
+  --forest-deep: #0a1310;
+  --gold: #d4b877;
+  --gold-soft: #b68a4e;
+  --hairline: rgba(237, 228, 208, 0.14);
+  --error: #c1573f;
+  --success: #6fae87;
   /* Dedicated hand-coding colors, distinct from --forest/--gold so a
      left-hand highlight never blends into the dark keyboard/background
      tones the way --forest does. Right hand keeps --gold for continuity. */
-  --hand-left: #1d5f8a;
-  --hand-right: #b6752e;
+  --hand-left: #6fb8e8;
+  --hand-right: #e8b866;
 }
 
 @theme inline {
@@ -36,24 +47,6 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-display: var(--font-playfair);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0e1712;
-    --background-elevated: #16211a;
-    --foreground: #ede4d0;
-    --muted: #a49b87;
-    --forest: #2c5540;
-    --forest-deep: #0a1310;
-    --gold: #d4b877;
-    --gold-soft: #b68a4e;
-    --hairline: rgba(237, 228, 208, 0.14);
-    --error: #c1573f;
-    --success: #6fae87;
-    --hand-left: #6fb8e8;
-    --hand-right: #e8b866;
-  }
 }
 
 body {

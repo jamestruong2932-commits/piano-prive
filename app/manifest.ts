@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Luyện tập piano với nhận diện nốt qua microphone",
     start_url: "/",
     display: "standalone",
-    background_color: "#f6f1e4",
-    theme_color: "#1f3d2e",
+    background_color: "#0e1712",
+    theme_color: "#0e1712",
     icons: [
       {
         src: "/icon",
