@@ -9,7 +9,7 @@ export default function Home() {
     <div className="flex flex-1 flex-col items-center">
       <HeroStage>
         <header className="relative mx-auto flex max-w-2xl flex-col items-center px-4 pb-32 pt-2 text-center sm:pb-36">
-          <p className="hero-copy-shadow mb-40 text-xs font-medium uppercase tracking-[0.35em] text-gold-soft sm:mb-16">
+          <p className="hero-copy-shadow mb-40 font-display text-base font-semibold uppercase tracking-[0.35em] text-gold sm:mb-16 sm:text-lg">
             Piano Privé
           </p>
           <h1 className="shimmer-text font-display text-4xl font-semibold tracking-tight sm:text-6xl">
