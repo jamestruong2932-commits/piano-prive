@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
 import AppHeader from "@/components/AppHeader";
 import "./globals.css";
@@ -21,6 +21,15 @@ const playfair = Playfair_Display({
 export const metadata: Metadata = {
   title: "Piano Privé",
   description: "Luyện tập piano với nhận diện nốt qua microphone",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Piano Privé",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0e1712",
 };
 
 export default function RootLayout({
