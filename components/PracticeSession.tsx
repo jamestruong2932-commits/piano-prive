@@ -29,6 +29,14 @@ const STABLE_FRAMES_REQUIRED = 5;
 // without losing all progress and forcing a full replay; a real stop/wrong
 // note still unwinds the streak within a couple of frames.
 const STABLE_FRAME_LEAK = 2;
+// A match is only allowed to *start* counting toward the stable-frame streak
+// if it began within this many frames of a genuine onset (a fresh strike).
+// This is a grace window, not a strict same-frame requirement: the RMS rise
+// that flags an onset and the pitch reading settling past the clarity
+// threshold don't always land on the exact same frame. Wide enough to cover
+// that latency, narrow enough that a previous note's decaying/drifting tail
+// (which isn't a fresh rise at all) can't sneak in.
+const ONSET_GRACE_FRAMES = 6;
 
 interface PracticeSessionProps {
   lessonId: string;
@@ -99,6 +107,11 @@ function ActivePractice({ lesson }: { lesson: Lesson }) {
   // read/written from the effect below, never during render, so a plain ref
   // is fine — it doesn't need to trigger a re-render on its own.
   const pendingReattackRef = useRef<Set<number>>(new Set());
+  // Whether the current step's match streak was legitimately armed by a
+  // fresh onset (as opposed to a decaying/drifting tail happening to read as
+  // the right pitch). Reset whenever the raw match drops out.
+  const matchArmedRef = useRef(false);
+  const framesSinceOnsetRef = useRef(Infinity);
 
   const isComplete = currentIndex >= lesson.steps.length;
   const currentStep = isComplete ? null : lesson.steps[currentIndex];
@@ -114,7 +127,7 @@ function ActivePractice({ lesson }: { lesson: Lesson }) {
   );
 
   const candidateMidis = useMemo(() => targetNotes.map((t) => t.midi), [targetNotes]);
-  const { detectedMidis, permission, errorMessage, start, stop } =
+  const { detectedMidis, isOnset, permission, errorMessage, start, stop } =
     usePitchDetector(candidateMidis);
   const detectedMidiList = useMemo(() => Array.from(detectedMidis), [detectedMidis]);
 
@@ -160,9 +173,28 @@ function ActivePractice({ lesson }: { lesson: Lesson }) {
       if (!detectedMidis.has(midi)) pendingReattackRef.current.delete(midi);
     }
 
-    const canAdvance = targetNotes.every(
+    framesSinceOnsetRef.current = isOnset ? 0 : framesSinceOnsetRef.current + 1;
+
+    const rawMatch = targetNotes.every(
       (t) => detectedMidis.has(t.midi) && !pendingReattackRef.current.has(t.midi)
     );
+
+    let canAdvance: boolean;
+    if (!rawMatch) {
+      matchArmedRef.current = false;
+      canAdvance = false;
+    } else if (matchArmedRef.current) {
+      canAdvance = true;
+    } else if (framesSinceOnsetRef.current <= ONSET_GRACE_FRAMES) {
+      // Rising edge of a match, and it lines up with a real strike — arm it.
+      matchArmedRef.current = true;
+      canAdvance = true;
+    } else {
+      // Rising edge, but with no recent onset behind it — most likely a
+      // previous note's decaying tail drifting onto this pitch. Don't let
+      // it start (or leak into) the stable-frame streak.
+      canAdvance = false;
+    }
 
     if (canAdvance) {
       stableCountRef.current += 1;
@@ -188,11 +220,13 @@ function ActivePractice({ lesson }: { lesson: Lesson }) {
     // many consecutive ticks without its value ever "changing", which would
     // stop this effect from re-running at all and freeze the stable-frame
     // count at 1 forever for a very steady signal.
-  }, [detectedMidis, isComplete, currentIndex, lesson.steps, targetNotes]);
+  }, [detectedMidis, isOnset, isComplete, currentIndex, lesson.steps, targetNotes]);
 
   const handleRestart = () => {
     stableCountRef.current = 0;
     pendingReattackRef.current.clear();
+    matchArmedRef.current = false;
+    framesSinceOnsetRef.current = Infinity;
     startTimeRef.current = Date.now();
     setElapsedSeconds(null);
     setCurrentIndex(0);
@@ -201,6 +235,8 @@ function ActivePractice({ lesson }: { lesson: Lesson }) {
   const handleSeek = (index: number) => {
     stableCountRef.current = 0;
     pendingReattackRef.current.clear();
+    matchArmedRef.current = false;
+    framesSinceOnsetRef.current = Infinity;
     setJustAdvanced(false);
     setCurrentIndex(Math.max(0, Math.min(index, lesson.steps.length - 1)));
   };

@@ -43,6 +43,22 @@ const PRESENCE_BIN_WINDOW = 3;
 // is much louder, still passes easily. Heuristic, not validated against a
 // real piano/mic — expect to retune after real-world testing.
 const MIN_MONO_RMS_DB = -50;
+// A held/decaying note can drift onto a neighboring note's frequency for a
+// few frames (harmonic content shifting as the fundamental fades, or a noisy
+// tail as the string settles). If that drift happens to land on the *next*
+// lesson step's pitch, requiring only "N consecutive matching frames" lets
+// the previous strike's dying tail silently satisfy the next step too — a
+// false advance the user never played ("nhảy nốt"). Gating matches on a
+// recent onset (a sharp RMS rise = an actual hammer strike) means a decaying
+// tail, which by definition isn't rising, can never arm a new match on its
+// own — only a genuine new strike can. Heuristic, not validated against a
+// real piano/mic — expect to retune after real-world testing.
+const ONSET_RISE_DB = 9;
+// How many recent frames to compare against when looking for that rise.
+// Wide enough to span a hammer strike's ramp-up (attack isn't always a
+// single-frame jump) without reaching so far back that it captures the
+// *previous* note's own onset.
+const RMS_HISTORY_FRAMES = 10;
 
 export interface PitchReading {
   note: NoteInfo | null;
@@ -56,6 +72,8 @@ interface UsePitchDetectorResult {
   reading: PitchReading;
   /** MIDI notes from `candidateMidis` currently judged to be sounding. */
   detectedMidis: Set<number>;
+  /** True on frames where RMS just jumped sharply — a fresh strike/attack. */
+  isOnset: boolean;
   permission: MicPermissionState;
   errorMessage: string | null;
   start: () => Promise<void>;
@@ -112,6 +130,7 @@ function isFrequencyPresent(
 export function usePitchDetector(candidateMidis: number[]): UsePitchDetectorResult {
   const [reading, setReading] = useState<PitchReading>(IDLE_READING);
   const [detectedMidis, setDetectedMidis] = useState<Set<number>>(new Set());
+  const [isOnset, setIsOnset] = useState(false);
   const [permission, setPermission] = useState<MicPermissionState>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -137,6 +156,7 @@ export function usePitchDetector(candidateMidis: number[]): UsePitchDetectorResu
     audioContextRef.current = null;
     setReading(IDLE_READING);
     setDetectedMidis(new Set());
+    setIsOnset(false);
     setPermission("idle");
   }, []);
 
@@ -170,6 +190,7 @@ export function usePitchDetector(candidateMidis: number[]): UsePitchDetectorResu
       const timeInput = new Float32Array(detector.inputLength);
       const freqInput = new Float32Array(chordAnalyser.frequencyBinCount);
       const binWidth = audioContext.sampleRate / CHORD_FFT_SIZE;
+      const rmsHistory: number[] = [];
 
       setPermission("granted");
 
@@ -177,11 +198,18 @@ export function usePitchDetector(candidateMidis: number[]): UsePitchDetectorResu
         monoAnalyser.getFloatTimeDomainData(timeInput);
         const [frequency, clarity] = detector.findPitch(timeInput, audioContext.sampleRate);
 
+        const rmsDb = computeRmsDb(timeInput);
+        const recentMinRmsDb = rmsHistory.length ? Math.min(...rmsHistory) : rmsDb;
+        const onset = rmsDb - recentMinRmsDb >= ONSET_RISE_DB;
+        rmsHistory.push(rmsDb);
+        if (rmsHistory.length > RMS_HISTORY_FRAMES) rmsHistory.shift();
+        setIsOnset(onset);
+
         const hasClearPitch =
           clarity >= MIN_CLARITY &&
           frequency >= MIN_FREQUENCY &&
           frequency <= MAX_FREQUENCY &&
-          computeRmsDb(timeInput) >= MIN_MONO_RMS_DB;
+          rmsDb >= MIN_MONO_RMS_DB;
         const note = hasClearPitch ? frequencyToNote(frequency) : null;
         setReading(
           hasClearPitch ? { note, frequency, clarity } : { note: null, frequency: 0, clarity: 0 }
@@ -220,5 +248,5 @@ export function usePitchDetector(candidateMidis: number[]): UsePitchDetectorResu
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return { reading, detectedMidis, permission, errorMessage, start, stop };
+  return { reading, detectedMidis, isOnset, permission, errorMessage, start, stop };
 }
